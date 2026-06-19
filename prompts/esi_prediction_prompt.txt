@@ -1,0 +1,28 @@
+Task: Estimate the Emergency Severity Index (ESI) triage level for one emergency department patient.
+
+ESI labels:
+- 1: immediate life-saving intervention needed
+- 2: high risk, severe pain/distress, or confused/lethargic/disoriented
+- 3: stable, likely needs multiple resources
+- 4: stable, likely needs one resource
+- 5: stable, likely needs no resources
+
+Use only the patient data below.
+
+Patient data:
+{
+  "age": 67,
+  "sex": "M",
+  "chief_complaint": "Medication question",
+  "clinical_notes": "67yo M requesting Medication question. Patient ambulatory, no acute distress. Non-urgent visit.",
+  "systolic_bp": 138.0,
+  "diastolic_bp": 68.0,
+  "heart_rate": 82.0,
+  "respiratory_rate": 18.0,
+  "temperature": 36.7,
+  "spo2": 98.4,
+  "pain_score": 2.0
+}
+
+Decide the value for predicted_esi_level.
+The value must be one of: 1, 2, 3, 4, 5, or uncertain.
