@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.vscode/
+
+data/synthetic_mimic_iv_ed/
+data/finetune/
+data/finetune_smoke/
+outputs/
+
+adapter/
+checkpoint-*/
