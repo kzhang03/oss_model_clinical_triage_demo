@@ -191,7 +191,7 @@ def main():
         table.to_csv(args.output_dir / filename, index=False)
         print(f"{filename}: {len(table):,} rows")
 
-    print(f"Created MIMIC-shaped synthetic tables in {args.output_dir.resolve()}")
+    print(f"Output: {args.output_dir.resolve()}")
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-Task: Estimate the Emergency Severity Index (ESI) triage level for one emergency department patient.
+Assign an Emergency Severity Index (ESI) level to this emergency department patient.
 
 ESI labels:
 - 1: immediate life-saving intervention needed
@@ -6,8 +6,6 @@ ESI labels:
 - 3: stable, likely needs multiple resources
 - 4: stable, likely needs one resource
 - 5: stable, likely needs no resources
-
-Use only the patient data below.
 
 Patient data:
 {
@@ -24,5 +22,4 @@ Patient data:
   "pain_score": 2.0
 }
 
-Decide the value for predicted_esi_level.
-The value must be one of: 1, 2, 3, 4, 5, or uncertain.
+Return `predicted_esi_level` as 1, 2, 3, 4, 5, or `uncertain`.

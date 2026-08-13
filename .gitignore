@@ -6,7 +6,11 @@ __pycache__/
 data/synthetic_mimic_iv_ed/
 data/finetune/
 data/finetune_smoke/
+data/mimic-iv-ed-*/
+data/finetune_mimic*/
 outputs/
+
+mimic-iv-ed-*.zip
 
 adapter/
 checkpoint-*/

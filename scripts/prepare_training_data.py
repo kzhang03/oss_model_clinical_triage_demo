@@ -7,9 +7,6 @@ import pandas as pd
 
 
 FEATURE_COLUMNS = [
-    "gender",
-    "race",
-    "arrival_transport",
     "temperature",
     "heartrate",
     "resprate",
@@ -19,6 +16,14 @@ FEATURE_COLUMNS = [
     "pain",
     "chiefcomplaint",
 ]
+
+
+def read_triage_table(input_dir):
+    for filename in ("triage.csv.gz", "triage.csv"):
+        path = input_dir / filename
+        if path.exists():
+            return pd.read_csv(path)
+    raise FileNotFoundError(f"No triage.csv.gz or triage.csv found in {input_dir}")
 
 
 def json_value(value):
@@ -100,17 +105,17 @@ def write_jsonl(frame, path):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Join MIMIC-style triage data and create subject-separated JSONL splits."
+        description="Prepare patient-separated JSONL splits from MIMIC-IV-ED triage data."
     )
     parser.add_argument(
         "--input-dir",
         type=Path,
-        default=Path("data/synthetic_mimic_iv_ed/ed"),
+        default=Path("data/mimic-iv-ed-2.2/ed"),
     )
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=Path("data/finetune_smoke"),
+        default=Path("data/finetune_mimic_smoke"),
     )
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--max-train", type=int)
@@ -119,36 +124,23 @@ def main():
     parser.add_argument("--balanced-smoke", action="store_true")
     args = parser.parse_args()
 
-    edstays = pd.read_csv(args.input_dir / "edstays.csv")
-    triage = pd.read_csv(args.input_dir / "triage.csv")
+    triage = read_triage_table(args.input_dir)
 
-    required_edstays = {"subject_id", "stay_id", "gender", "race", "arrival_transport"}
-    required_triage = {"subject_id", "stay_id", "acuity", *FEATURE_COLUMNS[3:]}
-    if missing := sorted(required_edstays - set(edstays.columns)):
-        raise ValueError(f"edstays.csv is missing columns: {missing}")
-    if missing := sorted(required_triage - set(triage.columns)):
-        raise ValueError(f"triage.csv is missing columns: {missing}")
+    required_columns = {"subject_id", "stay_id", "acuity", *FEATURE_COLUMNS}
+    if missing := sorted(required_columns - set(triage.columns)):
+        raise ValueError(f"triage table is missing columns: {missing}")
+    if triage["stay_id"].duplicated().any():
+        raise ValueError("triage table contains duplicate stay_id values")
 
-    joined = triage.merge(
-        edstays[["subject_id", "stay_id", "gender", "race", "arrival_transport"]],
-        on=["subject_id", "stay_id"],
-        how="inner",
-        validate="one_to_one",
-    )
-    joined["acuity"] = pd.to_numeric(joined["acuity"], errors="coerce")
-    joined = joined[joined["acuity"].isin([1, 2, 3, 4, 5])].copy()
-    joined["acuity"] = joined["acuity"].astype(int)
-    joined["gender"] = joined["gender"].astype("string").str.strip().str.upper()
-    joined["race"] = joined["race"].astype("string").str.strip().str.upper()
-    joined["arrival_transport"] = (
-        joined["arrival_transport"].astype("string").str.strip().str.upper()
-    )
-    joined["chiefcomplaint"] = joined["chiefcomplaint"].astype("string").str.strip()
-    joined = joined[["subject_id", "stay_id", *FEATURE_COLUMNS, "acuity"]]
+    triage["acuity"] = pd.to_numeric(triage["acuity"], errors="coerce")
+    triage = triage[triage["acuity"].isin([1, 2, 3, 4, 5])].copy()
+    triage["acuity"] = triage["acuity"].astype(int)
+    triage["chiefcomplaint"] = triage["chiefcomplaint"].astype("string").str.strip()
+    triage = triage[["subject_id", "stay_id", *FEATURE_COLUMNS, "acuity"]]
 
-    subject_splits = split_subjects(joined["subject_id"].unique(), args.seed)
+    subject_splits = split_subjects(triage["subject_id"].unique(), args.seed)
     split_frames = {
-        name: joined[joined["subject_id"].isin(subjects)].copy()
+        name: triage[triage["subject_id"].isin(subjects)].copy()
         for name, subjects in subject_splits.items()
     }
 
@@ -174,11 +166,11 @@ def main():
         )
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    joined.to_csv(args.output_dir / "prepared_triage.csv", index=False)
+    triage.to_csv(args.output_dir / "prepared_triage.csv", index=False)
 
     summary = {
-        "total_rows": int(len(joined)),
-        "total_subjects": int(joined["subject_id"].nunique()),
+        "total_rows": int(len(triage)),
+        "total_subjects": int(triage["subject_id"].nunique()),
         "features": FEATURE_COLUMNS,
         "splits": {},
         "subject_overlap": False,
@@ -202,8 +194,8 @@ def main():
         json.dumps(summary, indent=2),
         encoding="utf-8",
     )
-    print("Verified: no subject_id appears in more than one split.")
-    print(f"Prepared files written to {args.output_dir.resolve()}")
+    print("No subject overlap.")
+    print(f"Output: {args.output_dir.resolve()}")
 
 
 if __name__ == "__main__":

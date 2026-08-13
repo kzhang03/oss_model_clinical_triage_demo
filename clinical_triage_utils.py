@@ -29,8 +29,6 @@ COUNT_KEYS = ("correct", "incorrect", "uncertain", "invalid_output", "invalid_in
 
 
 def to_json_value(value: Any) -> Any:
-    """Convert pandas/numpy scalar values into JSON-serializable Python values."""
-
     if pd.isna(value):
         return None
     if hasattr(value, "item"):
@@ -39,18 +37,14 @@ def to_json_value(value: Any) -> Any:
 
 
 def row_to_case_json(row: pd.Series | dict[str, Any]) -> dict[str, Any]:
-    """Convert one cleaned triage row into the JSON payload sent to a model."""
-
     return {column: to_json_value(row[column]) for column in PROMPT_FEATURE_COLUMNS}
 
 
 def build_esi_prompt(case_json: dict[str, Any], template_path: str | Path) -> str:
-    """Build the model prompt for ESI prediction from a text template."""
-
     case_block = json.dumps(case_json, indent=2, ensure_ascii=False)
     template = Path(template_path).read_text(encoding="utf-8")
     return re.sub(
-        r"(Patient data:\s*)\{.*?\}(\s*Decide the value)",
+        r"(Patient data:\s*)\{.*?\}(\s*Return)",
         lambda match: f"{match.group(1)}{case_block}{match.group(2)}",
         template,
         count=1,
@@ -82,8 +76,6 @@ def score_prediction(prediction: int | str, actual_label: int, counts: Counter) 
 
 
 def first_model_device(model: Any) -> torch.device:
-    """Return the device that should receive tensor inputs for this model."""
-
     if hasattr(model, "hf_device_map"):
         for device in model.hf_device_map.values():
             if device not in {"cpu", "disk"}:
@@ -209,7 +201,11 @@ def embed_texts_medsiglip(
     if desc:
         from tqdm.auto import tqdm
 
-        batch_starts = tqdm(batch_starts, total=(len(texts) + batch_size - 1) // batch_size, desc=desc)
+        batch_starts = tqdm(
+            batch_starts,
+            total=(len(texts) + batch_size - 1) // batch_size,
+            desc=desc,
+        )
     with torch.no_grad():
         for start in batch_starts:
             batch = texts[start : start + batch_size]
