@@ -1,5 +1,9 @@
 # Synthetic MedGemma ESI Smoke Test
 
+> Historical result: this report describes the earlier generation-based
+> evaluation. The current fine-tuning notebook uses single-label training and
+> direct five-label scoring, so new results should be reported separately.
+
 Date: 2026-06-27
 
 ## Dataset
@@ -27,7 +31,7 @@ target. Splits were balanced by ESI level and separated by synthetic patient ID.
 | Training steps | 60 |
 | Trainable parameters | 14,901,248 |
 | Training loss | 0.1086 |
-| Training time | 41 minutes |
+| Training time | 1 hour, 41 minutes |
 | GPU | NVIDIA GeForce RTX 5060 Laptop GPU |
 | Peak allocated VRAM | 7.59 GiB |
 

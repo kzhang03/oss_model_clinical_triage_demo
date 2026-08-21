@@ -87,16 +87,14 @@ def write_jsonl(frame, path):
                         "role": "user",
                         "content": (
                             "Estimate the Emergency Severity Index (ESI) level "
-                            "from this triage record. Return only JSON with the "
-                            "key predicted_esi_level.\n\n"
+                            "from this triage record. Return only one ESI level: "
+                            "1, 2, 3, 4, or 5.\n\n"
                             f"Patient data:\n{json.dumps(patient, ensure_ascii=False)}"
                         ),
                     },
                     {
                         "role": "assistant",
-                        "content": json.dumps(
-                            {"predicted_esi_level": int(row["acuity"])}
-                        ),
+                        "content": str(int(row["acuity"])),
                     },
                 ],
             }
@@ -121,7 +119,13 @@ def main():
     parser.add_argument("--max-train", type=int)
     parser.add_argument("--max-validation", type=int)
     parser.add_argument("--max-test", type=int)
-    parser.add_argument("--balanced-smoke", action="store_true")
+    parser.add_argument(
+        "--balanced",
+        "--balanced-smoke",
+        dest="balanced",
+        action="store_true",
+        help="Sample approximately equal numbers of each ESI level.",
+    )
     args = parser.parse_args()
 
     triage = read_triage_table(args.input_dir)
@@ -161,17 +165,18 @@ def main():
         split_frames[name] = limit_rows(
             split_frames[name],
             limits[name],
-            args.balanced_smoke,
+            args.balanced,
             args.seed + index,
         )
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    triage.to_csv(args.output_dir / "prepared_triage.csv", index=False)
 
     summary = {
         "total_rows": int(len(triage)),
         "total_subjects": int(triage["subject_id"].nunique()),
         "features": FEATURE_COLUMNS,
+        "balanced": args.balanced,
+        "seed": args.seed,
         "splits": {},
         "subject_overlap": False,
     }
