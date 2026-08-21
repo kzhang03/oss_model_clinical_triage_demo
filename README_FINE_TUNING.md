@@ -39,7 +39,6 @@ Missing feature values are represented as JSON `null`.
 Activate the environment and install the pinned dependencies:
 
 ```powershell
-conda activate meddemo
 python -m pip install -r requirements-finetune.txt
 ```
 
@@ -154,7 +153,6 @@ of 500 encounters. Matching MedGemma results are added only after the optional
 `balanced_large` profile has been run on the same fingerprint.
 
 ```powershell
-conda activate meddemo
 jupyter nbconvert --to notebook --execute --inplace notebooks/baseline_comparison.ipynb
 ```
 
